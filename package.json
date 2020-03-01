@@ -1,0 +1,32 @@
+{
+  "name": "etherpad-lite",
+  "version": "1.0.0",
+  "description": "<a href=\"https://hub.docker.com/r/etherpad/etherpad\"><img alt=\"Docker Pulls\" src=\"https://img.shields.io/docker/pulls/etherpad/etherpad\"></a> ![Demo Etherpad Animated Jif](https://i.imgur.com/zYrGkg3.gif \"Etherpad in action\")",
+  "main": "index.js",
+  "bin": {
+    "etherpad-lite": "checkAllPads.js"
+  },
+  "directories": {
+    "doc": "doc",
+    "test": "tests"
+  },
+  "dependencies": {
+    "ep_etherpad-lite": "^1.8.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "dev":"node src/node/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fancylife/etherpad-lite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fancylife/etherpad-lite/issues"
+  },
+  "homepage": "https://github.com/fancylife/etherpad-lite#readme"
+}
