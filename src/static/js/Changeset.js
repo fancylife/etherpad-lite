@@ -68,6 +68,9 @@ exports.parseNum = function (str) {
  * @param num {int} number
  * @returns {string} string
  */
+ //转化一个数字为36进制 
+ // toString(radix) 
+ // radix可选。规定表示数字的基数，使 2 ~ 36 之间的整数。若省略该参数，则使用基数 10。但是要注意，如果该参数是 10 以外的其他值，则 ECMAScript 标准允许实现返回任意值。
 exports.numToString = function (num) {
   return num.toString(36).toLowerCase();
 };
@@ -180,6 +183,7 @@ exports.clearOp = function (op) {
  * Creates a new Op object
  * @param optOpcode the type operation of the Op object
  */
+ //创建一个新的操作对象
 exports.newOp = function (optOpcode) {
   return {
     opcode: (optOpcode || ''),
@@ -295,11 +299,12 @@ exports.checkRep = function (cs) {
  * creates an object that allows you to append operations (type Op) and also
  * compresses them if possible
  */
+ //创建一个对象（允许你添加操作并且尽可能压缩）
 exports.smartOpAssembler = function () {
-  // Like opAssembler but able to produce conforming exportss
-  // from slightly looser input, at the cost of speed.
+  // Like opAssembler but able to produce conforming exportss 像操作汇编程序，但能生产出合格的出口产品
+  // from slightly looser input, at the cost of speed. 从稍微宽松的投入，以速度为代价。
   // Specifically:
-  // - merges consecutive operations that can be merged
+  // - merges consecutive operations that can be merged 合并可以合并的连续操作
   // - strips final "="
   // - ignores 0-length changes
   // - reorders consecutive + and - (which margingOpAssembler doesn't do)
@@ -397,7 +402,7 @@ exports.smartOpAssembler = function () {
   };
 };
 
-
+//合并操作符
 exports.mergingOpAssembler = function () {
   // This assembler can be used in production; it efficiently
   // merges consecutive operations that are mergeable, ignores
@@ -473,10 +478,12 @@ exports.mergingOpAssembler = function () {
 };
 
 
-
+//操作的汇编程序
+//就是封装三个函数，并且闭包内有一个pieces
 exports.opAssembler = function () {
   var pieces = [];
   // this function allows op to be mutated later (doesn't keep a ref)
+  // 此函数允许以后对op进行修改（不保留引用）
 
   function append(op) {
     pieces.push(op.attribs);
@@ -900,6 +907,13 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
   var lenDiff = newLen - oldLen;
   var lenDiffStr = (lenDiff >= 0 ? '>' + exports.numToString(lenDiff) : '<' + exports.numToString(-lenDiff));
   var a = [];
+  //Z:1>1 {opsStr} $ {bank}
+  //exports.numToString(oldLen) 原始长度
+  // lenDiffStr 描述变长了多少，变短了多少,
+  // opsStr 什么操作
+  // $
+  // bank
+  //例子A: Z:1>0$  原来的长度是1，长度没有变化，对比值为0,没有操作opsStr，跟上$,没有bank
   a.push('Z:', exports.numToString(oldLen), lenDiffStr, opsStr, '$', bank);
   return a.join('');
 };
@@ -1536,6 +1550,7 @@ exports.moveOpsToNewPool = function (cs, oldPool, newPool) {
  * create an attribution inserting a text
  * @param text {string} text to be inserted
  */
+ //给文本创建一个归属
 exports.makeAttribution = function (text) {
   var assem = exports.smartOpAssembler();
   assem.appendOpWithText('+', text);
@@ -1603,6 +1618,8 @@ exports.mapAttribNumbers = function (cs, func) {
  * @attribs attribs {string} optional, operations which insert
  *    the text and also puts the right attributes
  */
+ // 初始传了一个换行符进来
+ //var baseAText = Changeset.makeAText("\n");
 exports.makeAText = function (text, attribs) {
   return {
     text: text,

@@ -192,8 +192,10 @@ function getCollabClient(ace2editor, serverVars, initialUserInfo, options, _pad)
     var sentMessage = false;
     // Check if there are any pending revisions to be received from server.
     // Allow only if there are no pending revisions to be received from server
+    //如果没有要等待的版本
     if (!isPendingRevision)
     {
+      // debugger;
         var userChangesData = editor.prepareUserChangeset();
         if (userChangesData.changeset)
         {
@@ -216,6 +218,7 @@ function getCollabClient(ace2editor, serverVars, initialUserInfo, options, _pad)
         setTimeout(wrapRecordingErrors("setTimeout(handleUserChanges)", handleUserChanges), 3000);
     }
 
+    //发送完信息，3秒内，自触发handleUserChanges，这里面包含服务端返回的新消息处理逻辑
     if (sentMessage)
     {
       // run again in a few seconds, to detect a disconnect

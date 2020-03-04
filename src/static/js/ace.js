@@ -66,14 +66,17 @@ function Ace2Editor()
       }
       if (optDoNow)
       {
+        //立刻执行
         optDoNow.apply(that, args);
       }
       if (loaded)
       {
+        // 编辑器加载好
         action();
       }
       else
       {
+        //存储在actionsPendingInit队列里面
         actionsPendingInit.push(action);
       }
     };
@@ -98,10 +101,13 @@ function Ace2Editor()
   'setUserChangeNotificationCallback', 'setAuthorInfo',
   'setAuthorSelectionRange', 'callWithAce', 'execCommand', 'replaceRange'];
 
+  //初始待执行的函数
   _.each(aceFunctionsPendingInit, function(fnName,i){
     var prefix = 'ace_';
     var name = prefix + fnName;
+    //editor注册fnName实际是调用 info里面的ace_${fnName}函数
     editor[fnName] = pendingInit(function(){
+      //这个
       info[prefix + fnName].apply(this, arguments);
     });
   });
@@ -206,7 +212,7 @@ function Ace2Editor()
     info.onEditorReady = function()
     {
       loaded = true;
-      doActionsPendingInit();
+      doActionsPendingInit();//消费待执行的任务
       doneFunc();
     };
 

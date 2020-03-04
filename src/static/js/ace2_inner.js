@@ -189,6 +189,7 @@ function Ace2Inner(){
     parentDynamicCSS = makeCSSManager("dynamicsyntax", "parent");
   }
 
+  //初始化一次 changesetTracker
   var changesetTracker = makeChangesetTracker(scheduler, rep.apool, {
     withCallbacks: function(operationName, f)
     {
@@ -749,6 +750,7 @@ function Ace2Inner(){
 
   function importAText(atext, apoolJsonObj, undoable)
   {
+    debugger;
     atext = Changeset.cloneAText(atext);
     if (apoolJsonObj)
     {

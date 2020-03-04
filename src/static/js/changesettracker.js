@@ -21,7 +21,7 @@
  */
 
 var AttributePool = require('./AttributePool');
-var Changeset = require('./Changeset');
+var Changeset = require('./Changeset');//工具类
 
 function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
 {
@@ -31,6 +31,7 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
   // changes applied to baseText that have been submitted
   var submittedChangeset = null;
   // changes applied to submittedChangeset since it was prepared
+  debugger;
   var userChangeset = Changeset.identity(1);
   // is the changesetTracker enabled
   var tracking = false;
@@ -74,10 +75,15 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
     },
     setBaseText: function(text)
     {
+      //设置初始值
       self.setBaseAttributedText(Changeset.makeAText(text), null);
     },
     setBaseAttributedText: function(atext, apoolJsonObj)
     {
+      // atext 初始值
+      // {"text":"Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n\n",
+      // "attribs":"|8+bj"}
+      debugger;
       aceCallbacksProvider.withCallbacks("setBaseText", function(callbacks)
       {
         tracking = true;
@@ -102,6 +108,7 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
     },
     composeUserChangeset: function(c)
     {
+      debugger;
       if (!tracking) return;
       if (applyingNonUserChanges) return;
       if (Changeset.isIdentity(c)) return;
@@ -112,6 +119,7 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
     //执行changeset
     applyChangesToBase: function(c, optAuthor, apoolJsonObj)
     {
+      debugger;
       if (!tracking) return;
 
       aceCallbacksProvider.withCallbacks("applyChangesToBase", function(callbacks)
@@ -152,6 +160,7 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
     },
     prepareUserChangeset: function()
     {
+      debugger;
       // If there are user changes to submit, 'changeset' will be the
       // changeset, else it will be null.
       var toSubmit;
