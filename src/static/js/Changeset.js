@@ -307,7 +307,8 @@ exports.smartOpAssembler = function () {
   // - merges consecutive operations that can be merged 合并可以合并的连续操作
   // - strips final "="
   // - ignores 0-length changes
-  // - reorders consecutive + and - (which margingOpAssembler doesn't do)
+  // - reorders consecutive + and - (which margingOpAssembler doesn't do) 重新排序连续的+和-（margingOpAssembler不做此操作）
+
   var minusAssem = exports.mergingOpAssembler();
   var plusAssem = exports.mergingOpAssembler();
   var keepAssem = exports.mergingOpAssembler();
@@ -315,17 +316,21 @@ exports.smartOpAssembler = function () {
   var lastOpcode = '';
   var lengthChange = 0;
 
-  function flushKeeps() {
-    assem.append(keepAssem.toString());
-    keepAssem.clear();
-  }
 
+  //flushPlusMinus调用
   function flushPlusMinus() {
     assem.append(minusAssem.toString());
     minusAssem.clear();
     assem.append(plusAssem.toString());
     plusAssem.clear();
   }
+
+  //flushKeeps调用
+  function flushKeeps() {
+    assem.append(keepAssem.toString());
+    keepAssem.clear();
+  }
+
 
   function append(op) {
     if (!op.opcode) return;
@@ -338,6 +343,7 @@ exports.smartOpAssembler = function () {
       minusAssem.append(op);
       lengthChange -= op.chars;
     } else if (op.opcode == '+') {
+      //如果是添加操作，
       if (lastOpcode == '=') {
         flushKeeps();
       }
@@ -351,21 +357,36 @@ exports.smartOpAssembler = function () {
     }
     lastOpcode = op.opcode;
   }
-
+  
+  //opcode [+,-,=]
   function appendOpWithText(opcode, text, attribs, pool) {
+
+    // {
+    //   opcode: (optOpcode || ''),
+    //   chars: 0,
+    //   lines: 0,
+    //   attribs: ''
+    // };
     var op = exports.newOp(opcode);
+
     op.attribs = exports.makeAttribsString(opcode, attribs, pool);
-    var lastNewlinePos = text.lastIndexOf('\n');
-    if (lastNewlinePos < 0) {
+    //最后一行标示的字符位置
+    var lastNewlinePos = text.lastIndexOf('\n'); // text='\n' 0
+    if (lastNewlinePos < 0) {//换行符不存在
       op.chars = text.length;
       op.lines = 0;
       append(op);
     } else {
-      op.chars = lastNewlinePos + 1;
-      op.lines = text.match(/\n/g).length;
+      //最后一行前有多少个字符
+      op.chars = lastNewlinePos + 1;// text='\n' 1
+      //换行符几个
+      op.lines = text.match(/\n/g).length;// text='\n' 1
       append(op);
-      op.chars = text.length - (lastNewlinePos + 1);
-      op.lines = 0;
+
+      //最后一行几个字符
+      op.chars = text.length - (lastNewlinePos + 1); // text='\n' 0
+      op.lines = 0; 
+      //如果字符长度是0，不会追加操作符
       append(op);
     }
   }
@@ -422,6 +443,8 @@ exports.mergingOpAssembler = function () {
       if (isEndDocument && bufOp.opcode == '=' && !bufOp.attribs) {
         // final merged keep, leave it implicit
       } else {
+        console.log('assem.append(bufOp);')
+        console.log(JSON.stringify(bufOp))
         assem.append(bufOp);
         if (bufOpAdditionalCharsAfterNewline) {
           bufOp.chars = bufOpAdditionalCharsAfterNewline;
@@ -436,6 +459,7 @@ exports.mergingOpAssembler = function () {
 
   function append(op) {
     if (op.chars > 0) {
+      //默认情况下bufOp.opcode是空的，而op.opcode有值
       if (bufOp.opcode == op.opcode && bufOp.attribs == op.attribs) {
         if (op.lines > 0) {
           // bufOp and additional chars are all mergeable into a multi-line op
@@ -451,7 +475,7 @@ exports.mergingOpAssembler = function () {
         }
       } else {
         flush();
-        exports.copyOp(op, bufOp);
+        exports.copyOp(op, bufOp);//op的内容都复制给bufOp
       }
     }
   }
@@ -488,9 +512,13 @@ exports.opAssembler = function () {
   function append(op) {
     pieces.push(op.attribs);
     if (op.lines) {
+      //描述多少行 | {lines}
       pieces.push('|', exports.numToString(op.lines));
     }
+    // 然后接操作操作符 + =》 | {lines} + 
     pieces.push(op.opcode);
+
+    //然后几个字符 | {lines} + {chars}  => { text: '\n', attribs: '|1+1' }
     pieces.push(exports.numToString(op.chars));
   }
 
@@ -929,7 +957,7 @@ exports.applyToText = function (cs, str) {
   var csIter = exports.opIterator(unpacked.ops);
   var bankIter = exports.stringIterator(unpacked.charBank);
   var strIter = exports.stringIterator(str);
-  var assem = exports.stringAssembler();
+  var assem = exports.stringAssembler(); //这是一个StringBuffer的实现pieces
   while (csIter.hasNext()) {
     var op = csIter.next();
     switch (op.opcode) {
@@ -1414,26 +1442,35 @@ exports.identity = function (N) {
  * @param numRemoved {int} number of characters to be removed
  * @param newText {string} string to be inserted
  * @param optNewTextAPairs {string} new pairs to be inserted
- * @param pool {AttribPool} Attribution Pool
+ * @param pool {AttribPool} Attribution Pool 属性尺
  */
+ //例如  Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
 exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, optNewTextAPairs, pool) {
   var oldLen = oldFullText.length;
 
+  //限制合适的切割开始位置
   if (spliceStart >= oldLen) {
     spliceStart = oldLen - 1;
   }
+
+  //限制合适的删除数量
   if (numRemoved > oldFullText.length - spliceStart) {
     numRemoved = oldFullText.length - spliceStart;
   }
+  //截取的符串
   var oldText = oldFullText.substring(spliceStart, spliceStart + numRemoved);
-  var newLen = oldLen + newText.length - oldText.length;
+  var newLen = oldLen + newText.length - oldText.length;//新的长度 = 原始长度 + 新文本长度 - 截取字符串的长度
 
   var assem = exports.smartOpAssembler();
-  assem.appendOpWithText('=', oldFullText.substring(0, spliceStart));
-  assem.appendOpWithText('-', oldText);
-  assem.appendOpWithText('+', newText, optNewTextAPairs, pool);
+  assem.appendOpWithText('=', oldFullText.substring(0, spliceStart));//保留的内容，内容为空时，不会有操作
+  assem.appendOpWithText('-', oldText);//删除的内容，截取的符串为空，也不会有减去的内容
+  assem.appendOpWithText('+', newText, optNewTextAPairs, pool);//追加的内容
+  //添加新字符串
   assem.endDocument();
-  return exports.pack(oldLen, newLen, assem.toString(), newText);
+  var result = exports.pack(oldLen, newLen, assem.toString(), newText);
+  console.log('Changeset 1451')
+  console.log(result)
+  return result;
 };
 
 /**
@@ -1553,7 +1590,10 @@ exports.moveOpsToNewPool = function (cs, oldPool, newPool) {
  //给文本创建一个归属
 exports.makeAttribution = function (text) {
   var assem = exports.smartOpAssembler();
+  console.log('var assem = exports.smartOpAssembler();')
+  // console.log(assem.toString());
   assem.appendOpWithText('+', text);
+  console.log(assem.toString());
   return assem.toString();
 };
 
@@ -1619,7 +1659,7 @@ exports.mapAttribNumbers = function (cs, func) {
  *    the text and also puts the right attributes
  */
  // 初始传了一个换行符进来
- //var baseAText = Changeset.makeAText("\n");
+ //var baseAText = Changeset.makeAText("\n"); => { text: '\n', attribs: '|1+1' }
 exports.makeAText = function (text, attribs) {
   return {
     text: text,
@@ -1811,6 +1851,7 @@ exports.makeAttribsString = function (opcode, attribs, pool) {
       attribs.sort();
     }
     var result = [];
+    //如果attribs多个，会聚合一下
     for (var i = 0; i < attribs.length; i++) {
       var pair = attribs[i];
       if (opcode == '=' || (opcode == '+' && pair[1])) {

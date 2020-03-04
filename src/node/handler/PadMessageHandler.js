@@ -919,7 +919,12 @@ async function handleClientReady(client, message)
   let authorName = value.name;
 
   // load the pad-object from the database
+   console.log('load the pad-object from the database');
+   console.log(padIds.padId)
   let pad = await padManager.getPad(padIds.padId);
+
+ 
+  console.log(pad);
 
   // these db requests all need the pad object (timestamp of latest revision, author data)
   let authors = pad.getAllAuthors();
@@ -1048,6 +1053,8 @@ async function handleClientReady(client, message)
     // This is a normal first connect
 
     // prepare all values for the wire, there's a chance that this throws, if the pad is corrupted
+    console.log('准备pad的内容')
+    console.log(pad)
     try {
       var atext = Changeset.cloneAText(pad.atext);
       var attribsForWire = Changeset.prepareForWire(atext.attribs, pad.pool);

@@ -68,7 +68,7 @@ exports.port = process.env.PORT || 9001;
 /**
  * Should we suppress Error messages from being in Pad Contents
  */
-exports.suppressErrorsInPadText = false;
+exports.suppressErrorsInPadText = true;
 
 /**
  * The SSL signed server key and the Certificate Authority's own certificate
@@ -94,6 +94,9 @@ exports.dbSettings = { "filename" : path.join(exports.root, "var/dirty.db") };
  * The default Text of a new pad
  */
 exports.defaultPadText = "Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nEtherpad on Github: https:\/\/github.com\/ether\/etherpad-lite\n";
+console.log('检测默认行数 ');
+console.log(exports.defaultPadText)
+console.log(exports.defaultPadText.match(/\n/g).length)
 
 /**
  * The default Pad Settings for a user (Can be overridden by changing the setting
@@ -703,9 +706,9 @@ exports.reloadSettings = function reloadSettings() {
 
   if (exports.dbType === "dirty") {
     var dirtyWarning = "DirtyDB is used. This is fine for testing but not recommended for production.";
-    if (!exports.suppressErrorsInPadText) {
-      exports.defaultPadText = exports.defaultPadText + "\nWarning: " + dirtyWarning + suppressDisableMsg;
-    }
+    // if (!exports.suppressErrorsInPadText) {
+    //   exports.defaultPadText = exports.defaultPadText + "\nWarning: " + dirtyWarning + suppressDisableMsg;
+    // }
 
     exports.dbSettings.filename = absolutePaths.makeAbsolute(exports.dbSettings.filename);
     console.warn(dirtyWarning + ` File location: ${exports.dbSettings.filename}`);
@@ -713,4 +716,4 @@ exports.reloadSettings = function reloadSettings() {
 };
 
 // initially load settings
-exports.reloadSettings();
+exports.reloadSettings(); //初始化设置

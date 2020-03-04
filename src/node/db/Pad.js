@@ -26,13 +26,25 @@ var jsonableList = ["pool"];
  * @param txt
  */
 exports.cleanText = function (txt) {
-  return txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\t/g, '        ').replace(/\xa0/g, ' ');
+  //将windows上的换行符和转化为\n
+  //将tab符转化成四个空格    
+  //\xa0转化为空格     \xa0表示不间断空白符 
+  console.log('cleanText')
+  var value = txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\t/g, '        ').replace(/\xa0/g, ' ');
+ 
+  console.log(value.match(/\n/g).length)
+
+  return value;
 };
 
 
 let Pad = function Pad(id) {
+  //初始化一个pad
   this.atext = Changeset.makeAText("\n");
+  console.log(' //初始化一个pad')
+  console.log(this.atext)
   this.pool = new AttributePool();
+  console.log(this.pool)
   this.head = -1;
   this.chatHead = -1;
   this.publicStatus = false;
@@ -328,12 +340,18 @@ Pad.prototype.init = async function init(text) {
 
   // replace text with default text if text isn't set
   if (text == null) {
+    console.log('默认内容没有的情况下，使用defaultPadText ')
     text = settings.defaultPadText;
+    console.log(text)
+    console.log(settings.defaultPadText.match(/\n/g).length)
+
+     //初始化
   }
 
   // try to load the pad
   let value = await db.get("pad:" + this.id);
-
+  console.log('let value = await db.get("pad:" + this.id);')
+  console.log(value)
   // if this pad exists, load it
   if (value != null) {
     // copy all attr. To a transfrom via fromJsonable if necassary
@@ -345,7 +363,10 @@ Pad.prototype.init = async function init(text) {
       }
     }
   } else {
+    console.log('如果pad不存在,添加第一个修改firstChangeset')
+    //如果pad不存在,添加第一个修改firstChangeset
     // this pad doesn't exist, so create it
+    // \n是最开始的文案，然后text是追加的文案
     let firstChangeset = Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
 
     this.appendRevision(firstChangeset, '');

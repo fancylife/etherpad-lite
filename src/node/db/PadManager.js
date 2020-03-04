@@ -140,6 +140,8 @@ exports.getPad = async function(id, text)
   }
 
   // try to load pad
+  console.log(' try to load pad '+id);
+  console.log('text:'+ text)
   pad = new Pad(id);
 
   // initalize the pad
