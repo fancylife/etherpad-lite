@@ -86,8 +86,15 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   if (!author) {
     author = '';
   }
-
+  console.log('-------------- appendRevision --------------')
+  // console.log(aChangeset);
+  console.log(this.atext)
   var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
+
+  console.log('-------------- newAText --------------')
+  console.log(newAText)
+
+
   Changeset.copyAText(newAText, this.atext);
 
   var newRev = ++this.head;
@@ -369,6 +376,7 @@ Pad.prototype.init = async function init(text) {
     // \n是最开始的文案，然后text是追加的文案
     let firstChangeset = Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
 
+    //第一个变更集，然后作用
     this.appendRevision(firstChangeset, '');
   }
 

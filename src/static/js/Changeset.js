@@ -130,7 +130,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
     var result;
     regex.lastIndex = curIndex;
     result = regex.exec(opsStr);
-    curIndex = regex.lastIndex;
+    curIndex = regex.lastIndex;//执行之后就是4了
     if (result[0] == '?') {
       exports.error("Hit error opcode in op stream");
     }
@@ -139,7 +139,8 @@ exports.opIterator = function (opsStr, optStartIndex) {
   }
   var regexResult = nextRegexMatch();
   var obj = exports.newOp();
-
+  // (/((?:\*[0-9a-z]+)*)(?:\|([0-9a-z]+))?([-+=])([0-9a-z]+)|\?|/g).exec('|1+1')
+  // ["|1+1","","1","+","1"]
   function next(optObj) {
     var op = (optObj || obj);
     if (regexResult[0]) {
@@ -876,6 +877,9 @@ exports.textLinesMutator = function (lines) {
  *             opOut - result operator to be put into Changeset
  * @return {string} the integrated changeset
  */
+  //  return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
+  //   return exports._slicerZipperFunc(op1, op2, opOut, pool);
+  // });
 exports.applyZip = function (in1, idx1, in2, idx2, func) {
   var iter1 = exports.opIterator(in1, idx1);
   var iter2 = exports.opIterator(in2, idx2);
@@ -923,6 +927,12 @@ exports.unpack = function (cs) {
   };
 };
 
+  //初始化调用makeSplice掉用pack参数 oldLen=1,newLen=newText.length+1,assem=|5行+字符总数,newText=text
+// Z:1>6b|5+6b$Welcome to Etherpad!
+// 'Z:'固定的，'1'代表之前的字符长度,'>6b'代表增加了227个字符（36进制表示就是6b）,'5'代表现在是增加了5行,'6b'还是描述增加了多少字符,'bank'就是增加的内容
+// This pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!
+// Get involved with Etherpad at http://etherpad.org
+
 /**
  * Packs Changeset object into a string
  * @params oldLen {int} Old length of the Changeset
@@ -945,6 +955,12 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
   a.push('Z:', exports.numToString(oldLen), lenDiffStr, opsStr, '$', bank);
   return a.join('');
 };
+// 
+// Z:1>6b|5+6b$Welcome to Etherpad!
+
+// This pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!
+
+// Get involved with Etherpad at http://etherpad.org
 
 /**
  * Applies a Changeset to a string
@@ -952,7 +968,7 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
  * @params str {string} String to which a Changeset should be applied
  */
 exports.applyToText = function (cs, str) {
-  var unpacked = exports.unpack(cs);
+  var unpacked = exports.unpack(cs);//拆包
   exports.assert(str.length == unpacked.oldLen, "mismatched apply: ", str.length, " / ", unpacked.oldLen);
   var csIter = exports.opIterator(unpacked.ops);
   var bankIter = exports.stringIterator(unpacked.charBank);
@@ -1465,13 +1481,22 @@ exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, op
   assem.appendOpWithText('=', oldFullText.substring(0, spliceStart));//保留的内容，内容为空时，不会有操作
   assem.appendOpWithText('-', oldText);//删除的内容，截取的符串为空，也不会有减去的内容
   assem.appendOpWithText('+', newText, optNewTextAPairs, pool);//追加的内容
+  assem.appendOpWithText('+', 'hi');//追加的内容
+
   //添加新字符串
   assem.endDocument();
-  var result = exports.pack(oldLen, newLen, assem.toString(), newText);
+  //makeSplice调用的case
+  var result = exports.pack(oldLen, newLen+2, assem.toString(), newText+'hi');
   console.log('Changeset 1451')
   console.log(result)
+
+
   return result;
 };
+  //初始化调用makeSplice掉用pack参数 oldLen=1,newLen=newText.length+1,assem=|5行+字符总数,newText=text
+// Z:1>6b|5+6b$Welcome to Etherpad!
+// This pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!
+// Get involved with Etherpad at http://etherpad.org
 
 /**
  * Transforms a changeset into a list of splices in the form
@@ -1674,6 +1699,7 @@ exports.makeAText = function (text, attribs) {
  * @param pool {AttribPool} Attribute Pool to add to
  */
 exports.applyToAText = function (cs, atext, pool) {
+  console.log('exports.applyToAText')
   return {
     text: exports.applyToText(cs, atext.text),
     attribs: exports.applyToAttribution(cs, atext.attribs, pool)
