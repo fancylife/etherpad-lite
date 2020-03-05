@@ -865,10 +865,10 @@ exports.textLinesMutator = function (lines) {
 
 /**
  * Function allowing iterating over two Op strings.
- * @params in1 {string} first Op string
- * @params idx1 {int} integer where 1st iterator should start
- * @params in2 {string} second Op string
- * @params idx2 {int} integer where 2nd iterator should start
+ * @params firstOpString {string} first Op string
+ * @params startIndexOfFirstIterator {int} integer where 1st iterator should start
+ * @params secondOpString {string} second Op string
+ * @params startIndexOfSecondIterator {int} integer where 2nd iterator should start
  * @params func {function} which decides how 1st or 2nd iterator
  *         advances. When opX.opcode = 0, iterator X advances to
  *         next element
@@ -881,23 +881,34 @@ exports.textLinesMutator = function (lines) {
   //  return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
   //   return exports._slicerZipperFunc(op1, op2, opOut, pool);
   // });
-exports.applyZip = function (in1, idx1, in2, idx2, func) {
-  var iter1 = exports.opIterator(in1, idx1);
-  var iter2 = exports.opIterator(in2, idx2);
+// astr='|1+1',0,unpacked.ops=|5+6b+2,0
+exports.applyZip = function (firstOpString, startIndexOfFirstIterator, secondOpString, startIndexOfSecondIterator, func) {
+  var iter1 = exports.opIterator(firstOpString, startIndexOfFirstIterator);
+  var iter2 = exports.opIterator(secondOpString, startIndexOfSecondIterator);
   var assem = exports.smartOpAssembler();
   var op1 = exports.newOp();
   var op2 = exports.newOp();
   var opOut = exports.newOp();
   while (op1.opcode || iter1.hasNext() || op2.opcode || iter2.hasNext()) {
-    if ((!op1.opcode) && iter1.hasNext()) iter1.next(op1);
-    if ((!op2.opcode) && iter2.hasNext()) iter2.next(op2);
+    if ((!op1.opcode) && iter1.hasNext()) iter1.next(op1); //设置op1
+    if ((!op2.opcode) && iter2.hasNext()) iter2.next(op2); //设置op2
+
+    console.log('----- func(op1, op2, opOut);-----')
+    console.log(op1);
+    console.log(op2);
     func(op1, op2, opOut);
+   
+    console.log(opOut)
     if (opOut.opcode) {
       //print(opOut.toSource());
+      // { opcode: '+', chars: 227, lines: 5, attribs: '' }
+      // { opcode: '+', chars: 2, lines: 0, attribs: '' }
+      // { opcode: '+', chars: 1, lines: 1, attribs: '' }
       assem.append(opOut);
       opOut.opcode = '';
     }
   }
+  console.log(assem.toString())
   assem.endDocument();
   return assem.toString();
 };
@@ -1129,22 +1140,25 @@ exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
  * Function used as parameter for applyZip to apply a Changeset to an
  * attribute
  */
+ //attOp原有的变更操作，csOp为新的变更操作
 exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
   // attOp is the op from the sequence that is being operated on, either an
   // attribution string or the earlier of two exportss being composed.
   // pool can be null if definitely not needed.
   //print(csOp.toSource()+" "+attOp.toSource()+" "+opOut.toSource());
-  if (attOp.opcode == '-') {
+  if (attOp.opcode == '-') { // attOp.opcode -
     exports.copyOp(attOp, opOut);
     attOp.opcode = '';
-  } else if (!attOp.opcode) {
+  } else if (!attOp.opcode) {//attOp.opcode 不存在
     exports.copyOp(csOp, opOut);
     csOp.opcode = '';
-  } else {
+  } else {// attOp.opcode + 或者 =
     switch (csOp.opcode) {
-    case '-':
+    case '-': //如果是删除操作
       {
+
         if (csOp.chars <= attOp.chars) {
+          //要删除部分字符
           // delete or delete part
           if (attOp.opcode == '=') {
             opOut.opcode = '-';
@@ -1159,6 +1173,7 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
             attOp.opcode = '';
           }
         } else {
+          //如果删除超过原有字符长度的字符
           // delete and keep going
           if (attOp.opcode == '=') {
             opOut.opcode = '-';
@@ -1182,6 +1197,7 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
     case '=':
       {
         if (csOp.chars <= attOp.chars) {
+          //如果是保留部分字符串
           // keep or keep part
           opOut.opcode = attOp.opcode;
           opOut.chars = csOp.chars;
@@ -1224,12 +1240,18 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
 exports.applyToAttribution = function (cs, astr, pool) {
   var unpacked = exports.unpack(cs);
   console.log('----- applyToAttribution ------');
-  console.log(cs);
+  console.log(unpacked);
   console.log(astr);
-  console.log(pool)
-
+  console.log(pool) // // AttributePool { numToAttrib: {}, attribToNum: {}, nextNum: 0 }
+  // astr='|1+1',0,unpacked.ops=|5+6b+2,0
   return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
-    return exports._slicerZipperFunc(op1, op2, opOut, pool);
+    // console.log('------ _slicerZipperFunc ------');
+    // console.log(op1);
+    // console.log(op2);
+    var tmp = exports._slicerZipperFunc(op1, op2, opOut, pool);
+    console.log('---------- exports._slicerZipperFunc -----------')
+    // console.log(tmp)
+    return tmp;
   });
 };
 
@@ -1648,8 +1670,9 @@ exports.makeAttribution = function (text) {
   var assem = exports.smartOpAssembler();
   console.log('var assem = exports.smartOpAssembler();')
   // console.log(assem.toString());
+  //从空白到 '\n'
   assem.appendOpWithText('+', text);
-  console.log(assem.toString());
+  console.log(assem.toString());//操作符为|1+1 一行和一个字符
   return assem.toString();
 };
 
@@ -1736,7 +1759,7 @@ exports.applyToAText = function (aChangeSet, atext, pool) {
   console.log('-- atext.text--')
   console.log(atext.text); //这是一个换行符 '\n'
 
-
+  //atext代表之前的文本
   return {
     text: exports.applyToText(aChangeSet, atext.text),
     attribs: exports.applyToAttribution(aChangeSet, atext.attribs, pool)

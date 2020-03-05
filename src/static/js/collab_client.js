@@ -99,7 +99,7 @@ function getCollabClient(ace2editor, serverVars, initialUserInfo, options, _pad)
   }
 
   editor.setProperty("userAuthor", userId);
-  debugger;
+  // debugger;
   editor.setBaseAttributedText(serverVars.initialAttributedText, serverVars.apool);
   //注册aceEditro的回调
   editor.setUserChangeNotificationCallback(wrapRecordingErrors("handleUserChanges", handleUserChanges));

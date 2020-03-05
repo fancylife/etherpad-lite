@@ -750,7 +750,7 @@ function Ace2Inner(){
 
   function importAText(atext, apoolJsonObj, undoable)
   {
-    debugger;
+    // debugger;
     atext = Changeset.cloneAText(atext);
     if (apoolJsonObj)
     {
