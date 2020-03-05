@@ -33,11 +33,11 @@ var AttributePool = function () {
   this.attribToNum = {}; // e.g. {'foo,bar': 0}
   this.nextNum = 0;
 };
-
+//  ["author", "a.71da1VPwAvF3nK4f"]
 AttributePool.prototype.putAttrib = function (attrib, dontAddIfAbsent) {
-  var str = String(attrib);
+  var str = String(attrib); // author,a.71da1VPwAvF3nK4f
   if (str in this.attribToNum) {
-    return this.attribToNum[str];
+    return this.attribToNum[str]; //如果存在，返回这个属性的编号
   }
   if (dontAddIfAbsent) {
     return -1;
@@ -45,6 +45,7 @@ AttributePool.prototype.putAttrib = function (attrib, dontAddIfAbsent) {
   var num = this.nextNum++;
   this.attribToNum[str] = num;
   this.numToAttrib[num] = [String(attrib[0] || ''), String(attrib[1] || '')];
+  // debugger;
   return num;
 };
 

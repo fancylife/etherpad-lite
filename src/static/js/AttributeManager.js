@@ -327,7 +327,9 @@ AttributeManager.prototype = _(AttributeManager.prototype).extend({
     @param attributeValue: an optional parameter to pass to the attribute (e.g. indention level)
 
   */
+  //行
   setAttributeOnLine: function(lineNum, attributeName, attributeValue){
+    debugger;
     var loc = [0,0];
     var builder = Changeset.builder(this.rep.lines.totalWidth());
     var hasMarker = this.lineHasMarker(lineNum);

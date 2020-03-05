@@ -445,8 +445,8 @@ exports.mergingOpAssembler = function () {
       if (isEndDocument && bufOp.opcode == '=' && !bufOp.attribs) {
         // final merged keep, leave it implicit
       } else {
-        console.log('assem.append(bufOp);')
-        console.log(JSON.stringify(bufOp))
+        // console.log('assem.append(bufOp);')
+        // console.log(JSON.stringify(bufOp))
         assem.append(bufOp);
         if (bufOpAdditionalCharsAfterNewline) {
           bufOp.chars = bufOpAdditionalCharsAfterNewline;
@@ -865,8 +865,8 @@ exports.textLinesMutator = function (lines) {
 
 /**
  * Function allowing iterating over two Op strings.
- * @params firstOpString {string} first Op string
- * @params startIndexOfFirstIterator {int} integer where 1st iterator should start
+ * @params oldString {string} first Op string
+ * @params startIndexOfOldString {int} integer where 1st iterator should start
  * @params secondOpString {string} second Op string
  * @params startIndexOfSecondIterator {int} integer where 2nd iterator should start
  * @params func {function} which decides how 1st or 2nd iterator
@@ -882,32 +882,56 @@ exports.textLinesMutator = function (lines) {
   //   return exports._slicerZipperFunc(op1, op2, opOut, pool);
   // });
 // astr='|1+1',0,unpacked.ops=|5+6b+2,0
-exports.applyZip = function (firstOpString, startIndexOfFirstIterator, secondOpString, startIndexOfSecondIterator, func) {
-  var iter1 = exports.opIterator(firstOpString, startIndexOfFirstIterator);
+exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, startIndexOfSecondIterator, func) {
+  var iter1 = exports.opIterator(oldString, startIndexOfOldString);
   var iter2 = exports.opIterator(secondOpString, startIndexOfSecondIterator);
   var assem = exports.smartOpAssembler();
   var op1 = exports.newOp();
   var op2 = exports.newOp();
   var opOut = exports.newOp();
-  while (op1.opcode || iter1.hasNext() || op2.opcode || iter2.hasNext()) {
-    if ((!op1.opcode) && iter1.hasNext()) iter1.next(op1); //设置op1
-    if ((!op2.opcode) && iter2.hasNext()) iter2.next(op2); //设置op2
+  console.log('------ applyZip --------')
+  // console.log('secondOpString %s',secondOpString)
+ 
 
-    console.log('----- func(op1, op2, opOut);-----')
-    console.log(op1);
-    console.log(op2);
+  while (op1.opcode || iter1.hasNext() || op2.opcode || iter2.hasNext()) {
+    if ((!op1.opcode) && iter1.hasNext()) {
+      iter1.next(op1)
+       console.log(op1);
+    }; //设置op1
+    if ((!op2.opcode) && iter2.hasNext()) {
+      iter2.next(op2)
+       console.log(op2);
+    }; //设置op2
+
+    // console.log('----- func(op1, op2, opOut);-----')
+    
+    // console.log('------ opOut start ------')
+    // console.log(op1);
+    // console.log(op2);
+
     func(op1, op2, opOut);
-   
-    console.log(opOut)
+    //    console.log('------ opOut end ------')
+    //  console.log(op1);
+    // console.log(op2);
+    // console.log(opOut)
+    if(!op1.opcode&&!op2.opcode){
+      // console.log('--op1.opcode-----op2.opcode没了--')
+      // console.log(op1.opcode);
+      // console.log(op2.opcode);
+    }
+
     if (opOut.opcode) {
       //print(opOut.toSource());
       // { opcode: '+', chars: 227, lines: 5, attribs: '' }
       // { opcode: '+', chars: 2, lines: 0, attribs: '' }
       // { opcode: '+', chars: 1, lines: 1, attribs: '' }
+      console.log('-- add opOut ---')
+      console.log(opOut);
       assem.append(opOut);
       opOut.opcode = '';
     }
   }
+  console.log('--- before assem.endDocument(); -----')
   console.log(assem.toString())
   assem.endDocument();
   return assem.toString();
@@ -922,8 +946,8 @@ exports.unpack = function (cs) {
   var headerRegex = /Z:([0-9a-z]+)([><])([0-9a-z]+)|/;
   var headerMatch = headerRegex.exec(cs);
 
-  console.log('--- headerMatch ---');
-  console.log(headerMatch)
+  // console.log('--- headerMatch ---');
+  // console.log(headerMatch)
   //是完整的匹配操作符 headerMatch[0]例如 Z:1>6d
   if ((!headerMatch) || (!headerMatch[0])) {
     exports.error("Not a exports: " + cs);
@@ -947,7 +971,7 @@ exports.unpack = function (cs) {
   //newLen: 230,
   //ops: '|5+6b+2',
   //charBank: 'Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\nhi' }
-  console.log(result);
+  // console.log(result);
   return result;
 };
 
@@ -965,6 +989,7 @@ exports.unpack = function (cs) {
  * @params bank {string} Charbank of the Changeset
  * @returns {Changeset} a Changeset class
  */
+//加粗 Z:6e>0 *1=k|2=2*1=49|2=2*1=1d|1=1*1=2 $
 exports.pack = function (oldLen, newLen, opsStr, bank) {
   var lenDiff = newLen - oldLen;
   var lenDiffStr = (lenDiff >= 0 ? '>' + exports.numToString(lenDiff) : '<' + exports.numToString(-lenDiff));
@@ -986,6 +1011,13 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
 
 // Get involved with Etherpad at http://etherpad.org
 
+// 例子2
+// 变更前 "Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with E\n"
+// changeset : Z:5h<k-k$ => 197变小20个字符'Welcome to Etherpad!',然后开始位置减少20个
+//例子3 
+// 变更前 ""aWelcome to Etherpad!j\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\nhi\n""
+// Z:6g>1|2=o=3x*0+1$j
+
 /**
  * Applies a Changeset to a string
  * @params cs {string} String encoded Changeset
@@ -993,8 +1025,8 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
  */
 exports.applyToText = function (cs, str) {
   var unpacked = exports.unpack(cs);//拆包
-  console.log('--- unpacked ---');
-  console.log(unpacked)
+  // console.log('--- unpacked ---');
+  // console.log(unpacked)
   //断言判断解包后的字符串长度和原始字符串是否一样
   exports.assert(str.length == unpacked.oldLen, "mismatched apply: ", str.length, " / ", unpacked.oldLen);
   var csIter = exports.opIterator(unpacked.ops); //|5+6b+2 解析
@@ -1079,6 +1111,7 @@ exports.mutateTextLines = function (cs, lines) {
  * @param resultIsMutaton {boolean}
  * @param pool {AttribPool} attribute pool
  */
+ //合并属性关注
 exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
   // att1 and att2 are strings like "*3*f*1c", asMutation is a boolean.
   // Sometimes attribute (key,value) pairs are treated as attribute presence
@@ -1141,6 +1174,9 @@ exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
  * attribute
  */
  //attOp原有的变更操作，csOp为新的变更操作
+//第一次
+// attOp = { opcode: '+', chars: 230, lines: 6, attribs: '' }
+// csOp = { opcode: '=', chars: 20, lines: 0, attribs: '*0' }
 exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
   // attOp is the op from the sequence that is being operated on, either an
   // attribution string or the earlier of two exportss being composed.
@@ -1202,7 +1238,10 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
           opOut.opcode = attOp.opcode;
           opOut.chars = csOp.chars;
           opOut.lines = csOp.lines;
-          opOut.attribs = exports.composeAttributes(attOp.attribs, csOp.attribs, attOp.opcode == '=', pool);
+          var tmp = exports.composeAttributes(attOp.attribs, csOp.attribs, attOp.opcode == '=', pool);
+          opOut.attribs = tmp;
+          // console.log('-- composeAttributes---');
+          // console.log(tmp)
           csOp.opcode = '';
           attOp.chars -= csOp.chars;
           attOp.lines -= csOp.lines;
@@ -1237,19 +1276,19 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
  * @param astr {string} the attribs string of a AText
  * @param pool {AttribsPool} the attibutes pool
  */
-exports.applyToAttribution = function (cs, astr, pool) {
+exports.applyToAttribution = function (cs, oldStr, pool) {
   var unpacked = exports.unpack(cs);
-  console.log('----- applyToAttribution ------');
-  console.log(unpacked);
-  console.log(astr);
-  console.log(pool) // // AttributePool { numToAttrib: {}, attribToNum: {}, nextNum: 0 }
-  // astr='|1+1',0,unpacked.ops=|5+6b+2,0
-  return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
+  // console.log('----- applyToAttribution ------');
+  // console.log(unpacked);
+  // console.log(oldStr);
+  // console.log(pool) // // AttributePool { numToAttrib: {}, attribToNum: {}, nextNum: 0 }
+  // oldStr='|1+1',0,unpacked.ops=|5+6b+2,0
+  return exports.applyZip(oldStr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
     // console.log('------ _slicerZipperFunc ------');
     // console.log(op1);
     // console.log(op2);
     var tmp = exports._slicerZipperFunc(op1, op2, opOut, pool);
-    console.log('---------- exports._slicerZipperFunc -----------')
+    // console.log('---------- exports._slicerZipperFunc -----------')
     // console.log(tmp)
     return tmp;
   });
@@ -1425,6 +1464,7 @@ exports.splitTextLines = function (text) {
  * @param pool {AtribsPool} Attribs pool
  */
 exports.compose = function (cs1, cs2, pool) {
+  // debugger;
   var unpacked1 = exports.unpack(cs1);
   var unpacked2 = exports.unpack(cs2);
   var len1 = unpacked1.oldLen;
@@ -1540,8 +1580,8 @@ exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, op
   assem.endDocument();
   //makeSplice调用的case
   var result = exports.pack(oldLen, newLen+2, assem.toString(), newText+'hi');
-  console.log('Changeset 1451')
-  console.log(result)
+  // console.log('Changeset 1451')
+  // console.log(result)
 
 
   return result;
@@ -1668,11 +1708,11 @@ exports.moveOpsToNewPool = function (cs, oldPool, newPool) {
  //给文本创建一个归属
 exports.makeAttribution = function (text) {
   var assem = exports.smartOpAssembler();
-  console.log('var assem = exports.smartOpAssembler();')
+  // console.log('var assem = exports.smartOpAssembler();')
   // console.log(assem.toString());
   //从空白到 '\n'
   assem.appendOpWithText('+', text);
-  console.log(assem.toString());//操作符为|1+1 一行和一个字符
+  // console.log(assem.toString());//操作符为|1+1 一行和一个字符
   return assem.toString();
 };
 
@@ -1742,9 +1782,12 @@ exports.mapAttribNumbers = function (cs, func) {
 exports.makeAText = function (text, attribs) {
   return {
     text: text,
-    attribs: (attribs || exports.makeAttribution(text))
+    attribs: (attribs || exports.makeAttribution(text))//这用来描述字符串的基本信息
   };
 };
+
+// console.log('----test  --')
+// console.log(exports.makeAttribution(text));
 
 /**
  * Apply a Changeset to a AText
@@ -1753,6 +1796,7 @@ exports.makeAText = function (text, attribs) {
  * @param pool {AttribPool} Attribute Pool to add to
  */
 exports.applyToAText = function (aChangeSet, atext, pool) {
+  // debugger;
   console.log('---------- applyToAText --------------');
   console.log('-- aChangeSet --')
   console.log(aChangeSet);
@@ -1883,6 +1927,7 @@ exports.attribsAttributeValue = function (attribs, key, pool) {
  * length oldLen. Allows to add/remove parts of it
  * @param oldLen {int} Old length
  */
+ //创建一个changeset的默认对象
 exports.builder = function (oldLen) {
   var assem = exports.smartOpAssembler();
   var o = exports.newOp();
@@ -1924,9 +1969,10 @@ exports.builder = function (oldLen) {
 
   return self;
 };
-
+// +,[['bold', 'true']],pool
 exports.makeAttribsString = function (opcode, attribs, pool) {
   // makeAttribsString(opcode, '*3') or makeAttribsString(opcode, [['foo','bar']], myPool) work
+  // debugger;
   if (!attribs) {
     return '';
   } else if ((typeof attribs) == "string") {

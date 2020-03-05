@@ -2419,10 +2419,10 @@ function Ace2Inner(){
   function toggleAttributeOnSelection(attributeName)
   {
     if (!(rep.selStart && rep.selEnd)) return;
-
+    // debugger; rep.apool 就是一个属性的配置词典
     var selectionAllHasIt = true;
     var withIt = Changeset.makeAttribsString('+', [
-      [attributeName, 'true']
+      [attributeName, 'true'] //attributeName => bold
     ], rep.apool);
     var withItRegex = new RegExp(withIt.replace(/\*/g, '\\*') + "(\\*|$)");
 
@@ -2598,6 +2598,7 @@ function Ace2Inner(){
         var builder = Changeset.builder(oldLen);
         builder.keep(spliceStartLineStart, spliceStartLine);
         builder.keep(spliceStart - spliceStartLineStart);
+        //首先保留已有的内容
         return builder;
       };
 
@@ -2667,6 +2668,7 @@ function Ace2Inner(){
       }
       else
       {
+        //改变内容
         var builder = startBuilder();
 
         var spliceEndLine = rep.lines.indexOfOffset(spliceEnd);
@@ -2682,9 +2684,17 @@ function Ace2Inner(){
         }
 
         var isNewTextMultiauthor = false;
+        //thisAuthor= "a.71da1VPwAvF3nK4f"
+        //rep.apool => 
+        //"{"numToAttrib":
+        //    {"0":["author","a.71da1VPwAvF3nK4f"]},
+        //   "attribToNum":
+        //      {"author,a.71da1VPwAvF3nK4f":0},"nextNum":1}"
+
         var authorAtt = Changeset.makeAttribsString('+', (thisAuthor ? [
           ['author', thisAuthor]
-        ] : []), rep.apool);
+        ] : []), rep.apool);  
+
         var authorizer = cachedStrFunc(function(oldAtts)
         {
           if (isNewTextMultiauthor)
@@ -2723,9 +2733,13 @@ function Ace2Inner(){
 
         eachAttribRun(newAttribs, function(start, end, attribs)
         {
-          builder.insert(newText.substring(start, end), authorizer(attribs));
+          var tmp = newText.substring(start, end);//新增的字符
+
+          builder.insert(tmp, authorizer(attribs));
         });
         theChangeset = builder.toString();
+        console.log && console.log('-------------- theChangeset -------------')
+        console.log && console.log(theChangeset)
       }
 
       //dmesg(htmlPrettyEscape(theChangeset));
@@ -5209,9 +5223,11 @@ function Ace2Inner(){
   {
     return documentAttributeManager.getAttributeOnLine(lineNum, listAttributeName)
   }
-
+  //设置行类型
   function setLineListType(lineNum, listType)
+
   {
+    // debugger;
     if(listType == ''){
       documentAttributeManager.removeAttributeOnLine(lineNum, listAttributeName);
       documentAttributeManager.removeAttributeOnLine(lineNum, 'start');
@@ -5305,7 +5321,7 @@ function Ace2Inner(){
 
   }
 
-
+  //插入列表
   function doInsertList(type)
   {
     if (!(rep.selStart && rep.selEnd))

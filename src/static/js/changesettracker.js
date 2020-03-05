@@ -119,7 +119,7 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
     //执行changeset
     applyChangesToBase: function(c, optAuthor, apoolJsonObj)
     {
-      debugger;
+      // debugger;
       if (!tracking) return;
 
       aceCallbacksProvider.withCallbacks("applyChangesToBase", function(callbacks)
@@ -254,6 +254,7 @@ function makeChangesetTracker(scheduler, apool, aceCallbacksProvider)
         // violation of protocol; use prepareUserChangeset first
         throw new Error("applySubmittedChangesToBase: no submitted changes to apply");
       }
+      debugger;
       //bumpDebug("applying committed changeset: "+submittedChangeset.encodeToString(false));
       baseAText = Changeset.applyToAText(submittedChangeset, baseAText, apool);
       submittedChangeset = null;
