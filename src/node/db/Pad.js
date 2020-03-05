@@ -89,6 +89,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   console.log('-------------- appendRevision --------------')
   // console.log(aChangeset);
   console.log(this.atext)
+  //这个changeSet会在原字符串之前追加内容
   var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
 
   console.log('-------------- newAText --------------')

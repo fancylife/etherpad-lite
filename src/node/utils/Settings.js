@@ -94,9 +94,9 @@ exports.dbSettings = { "filename" : path.join(exports.root, "var/dirty.db") };
  * The default Text of a new pad
  */
 exports.defaultPadText = "Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nEtherpad on Github: https:\/\/github.com\/ether\/etherpad-lite\n";
-console.log('检测默认行数 ');
-console.log(exports.defaultPadText)
-console.log(exports.defaultPadText.match(/\n/g).length)
+// console.log('检测默认行数 ');
+// console.log(exports.defaultPadText)
+// console.log(exports.defaultPadText.match(/\n/g).length)
 
 /**
  * The default Pad Settings for a user (Can be overridden by changing the setting

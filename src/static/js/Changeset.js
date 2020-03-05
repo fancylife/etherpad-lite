@@ -118,6 +118,7 @@ exports.newLen = function (cs) {
  * @param optStartIndex {int} from where in the string should the iterator start
  * @return {Op} type object iterator
  */
+ //这个函数就会把生成对操作字符串'|5+6b+2'的解析器， 每次hasNext解析出op对象{attribs,lines,opCode,chars字符数}
 exports.opIterator = function (opsStr, optStartIndex) {
   //print(opsStr);
   var regex = /((?:\*[0-9a-z]+)*)(?:\|([0-9a-z]+))?([-+=])([0-9a-z]+)|\?|/g;
@@ -544,7 +545,7 @@ exports.opAssembler = function () {
 exports.stringIterator = function (str) {
   var curIndex = 0;
   // newLines is the number of \n between curIndex and str.length
-  var newLines = str.split("\n").length - 1
+  var newLines = str.split("\n").length - 1 //字符串几行
   function getnewLines(){
     return newLines
   }
@@ -909,22 +910,34 @@ exports.applyZip = function (in1, idx1, in2, idx2, func) {
 exports.unpack = function (cs) {
   var headerRegex = /Z:([0-9a-z]+)([><])([0-9a-z]+)|/;
   var headerMatch = headerRegex.exec(cs);
+
+  console.log('--- headerMatch ---');
+  console.log(headerMatch)
+  //是完整的匹配操作符 headerMatch[0]例如 Z:1>6d
   if ((!headerMatch) || (!headerMatch[0])) {
     exports.error("Not a exports: " + cs);
   }
-  var oldLen = exports.parseNum(headerMatch[1]);
-  var changeSign = (headerMatch[2] == '>') ? 1 : -1;
-  var changeMag = exports.parseNum(headerMatch[3]);
-  var newLen = oldLen + changeSign * changeMag;
+  var oldLen = exports.parseNum(headerMatch[1]); //原始字符长度
+  var changeSign = (headerMatch[2] == '>') ? 1 : -1; //字符变长还是变短
+  var changeMag = exports.parseNum(headerMatch[3]); // 变化后的字符长度
+  var newLen = oldLen + changeSign * changeMag; //新字符的长度
   var opsStart = headerMatch[0].length;
-  var opsEnd = cs.indexOf("$");
+  var opsEnd = cs.indexOf("$");//找到$的位置
   if (opsEnd < 0) opsEnd = cs.length;
-  return {
+
+  var result = {
     oldLen: oldLen,
     newLen: newLen,
-    ops: cs.substring(opsStart, opsEnd),
-    charBank: cs.substring(opsEnd + 1)
+    ops: cs.substring(opsStart, opsEnd),//这儿从开始位置到$的位置，这样可以获取$之后的内容，结果例如 '|5+6b+2'
+    charBank: cs.substring(opsEnd + 1)//新增的字符
   };
+
+  //{ oldLen: 1,
+  //newLen: 230,
+  //ops: '|5+6b+2',
+  //charBank: 'Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\nhi' }
+  console.log(result);
+  return result;
 };
 
   //初始化调用makeSplice掉用pack参数 oldLen=1,newLen=newText.length+1,assem=|5行+字符总数,newText=text
@@ -969,21 +982,27 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
  */
 exports.applyToText = function (cs, str) {
   var unpacked = exports.unpack(cs);//拆包
+  console.log('--- unpacked ---');
+  console.log(unpacked)
+  //断言判断解包后的字符串长度和原始字符串是否一样
   exports.assert(str.length == unpacked.oldLen, "mismatched apply: ", str.length, " / ", unpacked.oldLen);
-  var csIter = exports.opIterator(unpacked.ops);
-  var bankIter = exports.stringIterator(unpacked.charBank);
-  var strIter = exports.stringIterator(str);
+  var csIter = exports.opIterator(unpacked.ops); //|5+6b+2 解析
+  var bankIter = exports.stringIterator(unpacked.charBank);//新增的字符
+  var strIter = exports.stringIterator(str);//老字符
   var assem = exports.stringAssembler(); //这是一个StringBuffer的实现pieces
   while (csIter.hasNext()) {
     var op = csIter.next();
     switch (op.opcode) {
-    case '+':
+    case '+'://如果当前操作是+号
       //op is + and op.lines 0: no newlines must be in op.chars
       //op is + and op.lines >0: op.chars must include op.lines newlines
+      //操作的行数 如果不等于  （截取这个操作符包含的字符串）的行数，那就是有问题啦
       if(op.lines != bankIter.peek(op.chars).split("\n").length - 1){
         throw new Error("newline count is wrong in op +; cs:"+cs+" and text:"+str);
       }
-      assem.append(bankIter.take(op.chars));
+      //新增字符，内容为：获取 bankIter的curIndex到操作符包含总数的,然后添加到  assem
+      var tmp = bankIter.take(op.chars);
+      assem.append(tmp);//pieces添加
       break;
     case '-':
       //op is - and op.lines 0: no newlines must be in the deleted string
@@ -991,6 +1010,7 @@ exports.applyToText = function (cs, str) {
       if(op.lines != strIter.peek(op.chars).split("\n").length - 1){
         throw new Error("newline count is wrong in op -; cs:"+cs+" and text:"+str);
       }
+      //如果是-的操作符，就把 老字符串里的 strIter 对应跳过 op.chars 个
       strIter.skip(op.chars);
       break;
     case '=':
@@ -999,11 +1019,18 @@ exports.applyToText = function (cs, str) {
       if(op.lines != strIter.peek(op.chars).split("\n").length - 1){
         throw new Error("newline count is wrong in op =; cs:"+cs+" and text:"+str);
       }
-      assem.append(strIter.take(op.chars));
+      //如果是等于，获取：获取老字符串里的 op.chars 个 ,然后添加到  assem
+      var tmp = strIter.take(op.chars);
+      assem.append(tmp);
       break;
     }
   }
-  assem.append(strIter.take(strIter.remaining()));
+
+  //最终，新的assem，再添加一次老的strIter
+  //保留的长度： strIter.remaining()
+  //获取字符串 strIter.take()
+  var tmp = strIter.take(strIter.remaining());
+  assem.append(tmp);
   return assem.toString();
 };
 
@@ -1196,6 +1223,10 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
  */
 exports.applyToAttribution = function (cs, astr, pool) {
   var unpacked = exports.unpack(cs);
+  console.log('----- applyToAttribution ------');
+  console.log(cs);
+  console.log(astr);
+  console.log(pool)
 
   return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
     return exports._slicerZipperFunc(op1, op2, opOut, pool);
@@ -1694,15 +1725,21 @@ exports.makeAText = function (text, attribs) {
 
 /**
  * Apply a Changeset to a AText
- * @param cs {Changeset} Changeset to be applied
+ * @param aChangeSet {Changeset} Changeset to be applied
  * @param atext {AText}
  * @param pool {AttribPool} Attribute Pool to add to
  */
-exports.applyToAText = function (cs, atext, pool) {
-  console.log('exports.applyToAText')
+exports.applyToAText = function (aChangeSet, atext, pool) {
+  console.log('---------- applyToAText --------------');
+  console.log('-- aChangeSet --')
+  console.log(aChangeSet);
+  console.log('-- atext.text--')
+  console.log(atext.text); //这是一个换行符 '\n'
+
+
   return {
-    text: exports.applyToText(cs, atext.text),
-    attribs: exports.applyToAttribution(cs, atext.attribs, pool)
+    text: exports.applyToText(aChangeSet, atext.text),
+    attribs: exports.applyToAttribution(aChangeSet, atext.attribs, pool)
   };
 };
 
@@ -2283,6 +2320,7 @@ exports.composeWithDeletions = function (cs1, cs2, pool) {
   var unpacked2 = exports.unpack(cs2);
   var len1 = unpacked1.oldLen;
   var len2 = unpacked1.newLen;
+  //断言判断解包后的字符串长度和原始字符串是否一样
   exports.assert(len2 == unpacked2.oldLen, "mismatched composition of two changesets");
   var len3 = unpacked2.newLen;
   var bankIter1 = exports.stringIterator(unpacked1.charBank);
