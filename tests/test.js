@@ -18,8 +18,15 @@ pool.fromJsonable({
         "1": ["italic", "true"],
         "2": ["underline", "true"],
         "3": ["strikethrough", "true"],
-        "4": ["bold", ""]
+        "4": ["bold", ""],
+        "5": ["strikethrough", ""]
     },
     "nextNum": 5
 })
-console.log(Changeset.applyToAttribution(submittedChangeset, baseText.attribs, pool))//=>*0+k|6+5u
+// console.log(Changeset.applyToAttribution(submittedChangeset, baseText.attribs, pool))//=>*0+k|6+5u
+
+var bb = Changeset.composeAttributes('*0*3','*1*4*5',false,pool);
+console.log(bb)//*1*3
+
+var aa = Changeset.composeAttributes('*0*3','*1*4',true,pool);
+console.log(aa)//*4*1*3

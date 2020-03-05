@@ -1135,16 +1135,18 @@ exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
   }
   if (!att2) return att1;
   var atts = [];
+  // *1*3
   att1.replace(/\*([0-9a-z]+)/g, function (_, a) {
     atts.push(pool.getAttrib(exports.parseNum(a)));
     return '';
   });
+  //*1*2
   att2.replace(/\*([0-9a-z]+)/g, function (_, a) {
-    var pair = pool.getAttrib(exports.parseNum(a));
+    var pair = pool.getAttrib(exports.parseNum(a)); //改变内容的属性对象，['bold','true']
     var found = false;
     for (var i = 0; i < atts.length; i++) {
-      var oldPair = atts[i];
-      if (oldPair[0] == pair[0]) {
+      var oldPair = atts[i];//原始内容的属性对象
+      if (oldPair[0] == pair[0]) { //存在相同的属性
         if (pair[1] || resultIsMutation) {
           oldPair[1] = pair[1];
         } else {
@@ -1230,7 +1232,7 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
         csOp.opcode = '';
         break;
       }
-    case '=':
+    case '='://变更集的操作符是=，说明可能是属性变化
       {
         if (csOp.chars <= attOp.chars) {
           //如果是保留部分字符串
@@ -1238,6 +1240,9 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
           opOut.opcode = attOp.opcode;
           opOut.chars = csOp.chars;
           opOut.lines = csOp.lines;
+          console.log('(attOp.attribs, csOp.attribs');
+          console.log(attOp.attribs);
+          console.log(csOp.attribs)
           var tmp = exports.composeAttributes(attOp.attribs, csOp.attribs, attOp.opcode == '=', pool);
           opOut.attribs = tmp;
           // console.log('-- composeAttributes---');
@@ -2474,6 +2479,7 @@ exports._slicerZipperFuncWithDeletions= function (attOp, csOp, opOut, pool) {
           opOut.opcode = attOp.opcode;
           opOut.chars = csOp.chars;
           opOut.lines = csOp.lines;
+          //如果原始是添加操作，当前是维持操作，那么value互斥的属性key不可取
           opOut.attribs = exports.composeAttributes(attOp.attribs, csOp.attribs, attOp.opcode == '=', pool);
           csOp.opcode = '';
           attOp.chars -= csOp.chars;
