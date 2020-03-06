@@ -25,8 +25,19 @@ pool.fromJsonable({
 })
 // console.log(Changeset.applyToAttribution(submittedChangeset, baseText.attribs, pool))//=>*0+k|6+5u
 
-var bb = Changeset.composeAttributes('*0*3','*1*4*5',false,pool);
-console.log(bb)//*1*3
+// var bb = Changeset.composeAttributes('*0*3','*1*4*5',false,pool);
+// console.log(bb)//*1*3
 
-var aa = Changeset.composeAttributes('*0*3','*1*4',true,pool);
-console.log(aa)//*4*1*3
+// var aa = Changeset.composeAttributes('*0*3','*1*4',true,pool);
+// console.log(aa)//*4*1*3
+
+// let preChangeset = 'Z:6e>0*0=k';
+// let curChangeset = 'Z:6e>0*0=j*1=1';
+// var tmp = Changeset.compose(preChangeset,curChangeset,pool)
+// console.log(tmp)//Z:6e>0*0=j*0*1=1$
+
+
+let preChangeset = 'Z:6e>0*0=k-1';
+let curChangeset = 'Z:6e>0*0=k+1$a';
+var tmp = Changeset.compose(preChangeset,curChangeset,pool)
+console.log(tmp)//Z:6e>0*0=k-1+1$a

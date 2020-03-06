@@ -894,12 +894,15 @@ exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, s
  
 
   while (op1.opcode || iter1.hasNext() || op2.opcode || iter2.hasNext()) {
+     console.log('--- 遍历op1和op2 ---')
     if ((!op1.opcode) && iter1.hasNext()) {
       iter1.next(op1)
+       console.log('--- 填充 op1 ---')
        console.log(op1);
     }; //设置op1
     if ((!op2.opcode) && iter2.hasNext()) {
       iter2.next(op2)
+       console.log('--- 填充 op2 ---')
        console.log(op2);
     }; //设置op2
 
@@ -931,8 +934,8 @@ exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, s
       opOut.opcode = '';
     }
   }
-  console.log('--- before assem.endDocument(); -----')
-  console.log(assem.toString())
+  // console.log('--- before assem.endDocument(); -----')
+  // console.log(assem.toString())
   assem.endDocument();
   return assem.toString();
 };
@@ -1184,6 +1187,9 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
   // attribution string or the earlier of two exportss being composed.
   // pool can be null if definitely not needed.
   //print(csOp.toSource()+" "+attOp.toSource()+" "+opOut.toSource());
+  console.log('--- _slicerZipperFunc ---');
+  console.log(attOp);
+  console.log(csOp)
   if (attOp.opcode == '-') { // attOp.opcode -
     exports.copyOp(attOp, opOut);
     attOp.opcode = '';
@@ -1472,6 +1478,11 @@ exports.compose = function (cs1, cs2, pool) {
   // debugger;
   var unpacked1 = exports.unpack(cs1);
   var unpacked2 = exports.unpack(cs2);
+  console.log('---- unpacked1 ---');
+  console.log(unpacked1)
+  console.log('---- unpacked2 ---');
+  console.log(unpacked2)
+
   var len1 = unpacked1.oldLen;
   var len2 = unpacked1.newLen;
   exports.assert(len2 == unpacked2.oldLen, "mismatched composition of two changesets");
@@ -1493,7 +1504,7 @@ exports.compose = function (cs1, cs2, pool) {
     }
     exports._slicerZipperFunc(op1, op2, opOut, pool);
     if (opOut.opcode == '+') {
-      if (op2code == '+') {
+      if (op2code == '+') {//如果op2Code是+，他的操作复制给了opOut,查看line1231
         bankAssem.append(bankIter2.take(opOut.chars));
       } else {
         bankAssem.append(bankIter1.take(opOut.chars));
@@ -2389,6 +2400,7 @@ exports.followAttributes = function (att1, att2, pool) {
   return buf.toString();
 };
 
+//这个就是follow函数
 exports.composeWithDeletions = function (cs1, cs2, pool) {
   var unpacked1 = exports.unpack(cs1);
   var unpacked2 = exports.unpack(cs2);
