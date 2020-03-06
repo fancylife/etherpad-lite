@@ -882,7 +882,7 @@ exports.textLinesMutator = function (lines) {
   //   return exports._slicerZipperFunc(op1, op2, opOut, pool);
   // });
 // astr='|1+1',0,unpacked.ops=|5+6b+2,0
-exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, startIndexOfSecondIterator, func) {
+exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, startIndexOfSecondIterator, mergeOpFunc) {
   var iter1 = exports.opIterator(oldString, startIndexOfOldString);
   var iter2 = exports.opIterator(secondOpString, startIndexOfSecondIterator);
   var assem = exports.smartOpAssembler();
@@ -891,7 +891,6 @@ exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, s
   var opOut = exports.newOp();
   console.log('------ applyZip --------')
   // console.log('secondOpString %s',secondOpString)
- 
 
   while (op1.opcode || iter1.hasNext() || op2.opcode || iter2.hasNext()) {
      console.log('--- 遍历op1和op2 ---')
@@ -906,29 +905,16 @@ exports.applyZip = function (oldString, startIndexOfOldString, secondOpString, s
        console.log(op2);
     }; //设置op2
 
-    // console.log('----- func(op1, op2, opOut);-----')
-    
-    // console.log('------ opOut start ------')
-    // console.log(op1);
-    // console.log(op2);
-
-    func(op1, op2, opOut);
-    //    console.log('------ opOut end ------')
-    //  console.log(op1);
-    // console.log(op2);
-    // console.log(opOut)
-    if(!op1.opcode&&!op2.opcode){
-      // console.log('--op1.opcode-----op2.opcode没了--')
-      // console.log(op1.opcode);
-      // console.log(op2.opcode);
-    }
+    //mergeOpFunc代表如何合并两个操作符
+    mergeOpFunc(op1, op2, opOut);
+   
 
     if (opOut.opcode) {
       //print(opOut.toSource());
       // { opcode: '+', chars: 227, lines: 5, attribs: '' }
       // { opcode: '+', chars: 2, lines: 0, attribs: '' }
       // { opcode: '+', chars: 1, lines: 1, attribs: '' }
-      console.log('-- add opOut ---')
+      console.log('-- create new opOut ---')
       console.log(opOut);
       assem.append(opOut);
       opOut.opcode = '';
@@ -1474,6 +1460,7 @@ exports.splitTextLines = function (text) {
  * @param cs2 {Changeset} second Changeset
  * @param pool {AtribsPool} Attribs pool
  */
+ //合并修改及
 exports.compose = function (cs1, cs2, pool) {
   // debugger;
   var unpacked1 = exports.unpack(cs1);
@@ -1490,7 +1477,7 @@ exports.compose = function (cs1, cs2, pool) {
   var bankIter1 = exports.stringIterator(unpacked1.charBank);
   var bankIter2 = exports.stringIterator(unpacked2.charBank);
   var bankAssem = exports.stringAssembler();
-
+  //产生新的操作符
   var newOps = exports.applyZip(unpacked1.ops, 0, unpacked2.ops, 0, function (op1, op2, opOut) {
     //var debugBuilder = exports.stringAssembler();
     //debugBuilder.append(exports.opString(op1));
@@ -1502,6 +1489,7 @@ exports.compose = function (cs1, cs2, pool) {
     if (op1code == '+' && op2code == '-') {
       bankIter1.skip(Math.min(op1.chars, op2.chars));
     }
+    //产生新操作符子方法 _slicerZipperFunc
     exports._slicerZipperFunc(op1, op2, opOut, pool);
     if (opOut.opcode == '+') {
       if (op2code == '+') {//如果op2Code是+，他的操作复制给了opOut,查看line1231
@@ -2492,6 +2480,7 @@ exports._slicerZipperFuncWithDeletions= function (attOp, csOp, opOut, pool) {
           opOut.chars = csOp.chars;
           opOut.lines = csOp.lines;
           //如果原始是添加操作，当前是维持操作，那么value互斥的属性key不可取
+          //如果原始操作是添加或者保留，就涉及操作文本区域的属性合并逻辑
           opOut.attribs = exports.composeAttributes(attOp.attribs, csOp.attribs, attOp.opcode == '=', pool);
           csOp.opcode = '';
           attOp.chars -= csOp.chars;
