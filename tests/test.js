@@ -39,5 +39,8 @@ pool.fromJsonable({
 
 let preChangeset = 'Z:6e>0*0=k-1';
 let curChangeset = 'Z:6e>0*0=k+1$a';
-var tmp = Changeset.compose(preChangeset,curChangeset,pool)
+var tmp = Changeset.compose(preChangeset,curChangeset,pool);
+var tmp1 = Changeset.composeWithDeletions(preChangeset,curChangeset,pool);
+
 console.log(tmp)//Z:6e>0*0=k-1+1$a
+console.log(tmp1)
